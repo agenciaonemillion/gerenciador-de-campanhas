@@ -1,116 +1,152 @@
-import { NavLink, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
-import { 
-  FiHome, 
-  FiUsers, 
-  FiSettings, 
-  FiLogOut, 
-  FiChevronDown, 
-  FiChevronUp,
-  FiBarChart2,
-  FiClock,
-  FiUserPlus,
-  FiDatabase
-} from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
-function Sidebar() {
-  const navigate = useNavigate();
-  const [openMenus, setOpenMenus] = useState({
-    campanhas: false,
-    clientes: false
-  });
+// Menu items for the sidebar
+const menuItems = [
+  { path: '/', label: 'Dashboard', icon: 'chart-bar' },
+  { path: '/campanhas', label: 'Campanhas', icon: 'megaphone' },
+  { path: '/segmentos', label: 'Segmentos', icon: 'user-group' },
+  { path: '/resultados', label: 'Resultados', icon: 'chart-pie' },
+  { path: '/configuracoes', label: 'Configurações', icon: 'cog' },
+];
 
-  const toggleMenu = (menu) => {
-    setOpenMenus(prev => ({
-      ...prev,
-      [menu]: !prev[menu]
-    }));
-  };
+export default function Sidebar() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isOpen, setIsOpen] = useState(!isMobile);
+  const location = useLocation();
 
-  const logout = () => {
-    navigate('/login');
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      setIsOpen(!mobile);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Animation variants
+  const sidebarVariants = {
+    open: { x: 0, opacity: 1 },
+    closed: { x: isMobile ? -280 : 0, opacity: isMobile ? 0 : 1 }
   };
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 h-full flex flex-col">
-      <div className="p-6 border-b">
-        <img src="/src/assets/logo.svg" alt="Logo" className="h-8 mx-auto" />
-      </div>
-      
-      <nav className="flex-grow p-4 space-y-1">
-        <NavLink to="/" className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}>
-          <FiHome size={18} />
-          <span>Dashboard</span>
-        </NavLink>
-        
-        {/* Campanhas Dropdown */}
-        <div>
-          <button 
-            onClick={() => toggleMenu('campanhas')} 
-            className="sidebar-link w-full flex justify-between"
+    <>
+      {/* Mobile Hamburger Menu */}
+      {isMobile && (
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="fixed top-4 left-4 z-30 p-2 rounded-md bg-blue-600 text-white"
+          aria-label={isOpen ? "Close menu" : "Open menu"}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
           >
-            <div className="flex items-center gap-3">
-              <FiBarChart2 size={18} />
-              <span>Campanhas</span>
-            </div>
-            {openMenus.campanhas ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
-          </button>
-          
-          {openMenus.campanhas && (
-            <div className="ml-8 mt-1 space-y-1">
-              <NavLink to="/campanhas/criar" className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}>
-                <FiUserPlus size={16} />
-                <span>Criar Campanha</span>
-              </NavLink>
-              <NavLink to="/campanhas/historico" className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}>
-                <FiClock size={16} />
-                <span>Histórico de Campanhas</span>
-              </NavLink>
-            </div>
-          )}
-        </div>
-        
-        {/* Clientes Dropdown */}
-        <div>
-          <button 
-            onClick={() => toggleMenu('clientes')} 
-            className="sidebar-link w-full flex justify-between"
-          >
-            <div className="flex items-center gap-3">
-              <FiUsers size={18} />
-              <span>Clientes</span>
-            </div>
-            {openMenus.clientes ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
-          </button>
-          
-          {openMenus.clientes && (
-            <div className="ml-8 mt-1 space-y-1">
-              <NavLink to="/clientes/listar" className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}>
-                <FiUsers size={16} />
-                <span>Listar Clientes</span>
-              </NavLink>
-              <NavLink to="/clientes/importacao" className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}>
-                <FiDatabase size={16} />
-                <span>Controle de Importação</span>
-              </NavLink>
-            </div>
-          )}
-        </div>
-        
-        <NavLink to="/configuracoes" className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}>
-          <FiSettings size={18} />
-          <span>Configurações</span>
-        </NavLink>
-      </nav>
-      
-      <div className="p-4 border-t">
-        <button onClick={logout} className="sidebar-link text-red-600 hover:bg-red-100 hover:text-red-700 w-full">
-          <FiLogOut size={18} />
-          <span>Logout</span>
+            {isOpen ? (
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            ) : (
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            )}
+          </svg>
         </button>
+      )}
+
+      {/* Backdrop for mobile */}
+      <AnimatePresence>
+        {isMobile && isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.5 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black z-20"
+            onClick={() => setIsOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar */}
+      <motion.aside
+        variants={sidebarVariants}
+        initial={isMobile ? "closed" : "open"}
+        animate={isOpen ? "open" : "closed"}
+        transition={{ duration: 0.3, type: "tween" }}
+        className={`fixed left-0 top-0 h-full bg-gray-800 text-white w-64 z-20 
+                   shadow-lg overflow-y-auto ${isMobile ? 'top-0' : 'pt-4'}`}
+      >
+        <div className="px-4 py-5 flex items-center justify-between">
+          <h1 className="text-xl font-bold">Campaign Manager</h1>
+          {isMobile && (
+            <button
+              onClick={() => setIsOpen(false)}
+              className="text-white p-1"
+              aria-label="Close menu"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          )}
+        </div>
+
+        <nav className="mt-8">
+          <ul className="space-y-2 px-2">
+            {menuItems.map((item) => (
+              <li key={item.path}>
+                <Link
+                  to={item.path}
+                  className={`flex items-center px-4 py-3 rounded-md transition-colors duration-200
+                             ${location.pathname === item.path
+                      ? 'bg-blue-700 text-white'
+                      : 'text-gray-300 hover:bg-gray-700'
+                    }`}
+                  onClick={() => isMobile && setIsOpen(false)}
+                >
+                  <span className="mr-3">
+                    <i className={`fas fa-${item.icon}`}></i>
+                  </span>
+                  <span>{item.label}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </motion.aside>
+
+      {/* Main content wrapper with margin for sidebar */}
+      <div
+        className={`transition-all duration-300 ${isOpen && !isMobile ? 'ml-64' : 'ml-0'}`}
+      >
+        {/* This div works as a spacer for the main content */}
+        <div className={`${isMobile ? 'py-16' : ''}`}></div>
       </div>
-    </aside>
+    </>
   );
 }
-
-export default Sidebar;

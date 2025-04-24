@@ -1,233 +1,246 @@
-import { useState } from 'react';
-import DatePicker from 'react-datepicker';
-import "react-datepicker/dist/react-datepicker.css";
-import { FiSave, FiX } from 'react-icons/fi';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { showSuccess, showError } from '../utils/toast';
 
-function CriarCampanha() {
+// Import custom components
+import Button from '../components/Button';
+import Input from '../components/Input';
+import Select from '../components/Select';
+import Card from '../components/Card';
+
+const CriarCampanha = () => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  
   const [formData, setFormData] = useState({
-    nomeCampanha: '',
-    produto: '',
-    dataInicio: null,
-    dataFim: null,
-    valorMinimo: '',
-    valorMaximo: '',
-    localizacao: ''
+    nome: '',
+    segmento: '',
+    dataInicio: '',
+    dataFim: '',
+    canal: '',
+    mensagem: '',
+    orcamento: '',
   });
-
+  
+  const [errors, setErrors] = useState({});
+  
+  const canaisOptions = [
+    { value: 'email', label: 'E-mail' },
+    { value: 'sms', label: 'SMS' },
+    { value: 'push', label: 'Notificação Push' },
+    { value: 'whatsapp', label: 'WhatsApp' },
+  ];
+  
+  const segmentosOptions = [
+    { value: 'todos', label: 'Todos os clientes' },
+    { value: 'inativos', label: 'Clientes inativos' },
+    { value: 'novos', label: 'Novos clientes' },
+    { value: 'vip', label: 'Clientes VIP' },
+  ];
+  
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData({ ...formData, [name]: value });
+    
+    // Clear error when user corrects field
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: null });
+    }
   };
-
-  const handleDateChange = (date, name) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: date
-    }));
+  
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.nome.trim()) {
+      newErrors.nome = 'Nome é obrigatório';
+    }
+    
+    if (!formData.segmento) {
+      newErrors.segmento = 'Selecione um segmento';
+    }
+    
+    if (!formData.dataInicio) {
+      newErrors.dataInicio = 'Data de início é obrigatória';
+    }
+    
+    if (!formData.dataFim) {
+      newErrors.dataFim = 'Data de término é obrigatória';
+    } else if (formData.dataInicio && new Date(formData.dataFim) <= new Date(formData.dataInicio)) {
+      newErrors.dataFim = 'Data de término deve ser posterior à data de início';
+    }
+    
+    if (!formData.canal) {
+      newErrors.canal = 'Selecione um canal de comunicação';
+    }
+    
+    if (!formData.mensagem.trim()) {
+      newErrors.mensagem = 'Mensagem é obrigatória';
+    } else if (formData.mensagem.length < 10) {
+      newErrors.mensagem = 'Mensagem muito curta (mínimo 10 caracteres)';
+    }
+    
+    if (!formData.orcamento) {
+      newErrors.orcamento = 'Orçamento é obrigatório';
+    } else if (isNaN(Number(formData.orcamento)) || Number(formData.orcamento) <= 0) {
+      newErrors.orcamento = 'Informe um valor válido maior que zero';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
-
+  
   const handleSubmit = (e) => {
     e.preventDefault();
-    // This would handle form submission in a real implementation
-    console.log('Form data submitted:', formData);
-    alert('Segmentação gerada com sucesso! (Simulação)');
+    
+    if (validateForm()) {
+      setLoading(true);
+      
+      // Simulate API call
+      setTimeout(() => {
+        setLoading(false);
+        showSuccess('Campanha criada com sucesso!');
+        navigate('/campanhas');
+      }, 1500);
+    } else {
+      showError('Por favor, corrija os erros no formulário.');
+    }
   };
-
+  
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">Criar Nova Campanha</h1>
-        <p className="text-gray-600">Configure os parâmetros para segmentar clientes para sua campanha</p>
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="container mx-auto px-4 py-8"
+    >
+      <div className="mb-6 flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Criar Nova Campanha</h1>
+        <Button 
+          variant="secondary" 
+          onClick={() => navigate('/campanhas')}
+          className="flex items-center"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+          </svg>
+          Voltar
+        </Button>
       </div>
-
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="card">
-          <h2 className="text-lg font-semibold mb-4">Informações Básicas</h2>
-          
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="nomeCampanha" className="block text-sm font-medium text-gray-700 mb-1">
-                Nome da Campanha
-              </label>
-              <input
-                type="text"
-                id="nomeCampanha"
-                name="nomeCampanha"
-                value={formData.nomeCampanha}
-                onChange={handleChange}
-                className="input-field"
-                placeholder="Ex: Campanha de Verão 2023"
-                required
-              />
-            </div>
+      
+      <Card className="max-w-4xl mx-auto">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Input
+              label="Nome da Campanha"
+              name="nome"
+              value={formData.nome}
+              onChange={handleChange}
+              error={errors.nome}
+              required
+              placeholder="Ex: Campanha Black Friday"
+            />
             
-            <div>
-              <label htmlFor="produto" className="block text-sm font-medium text-gray-700 mb-1">
-                Selecionar Produto
-              </label>
-              <select
-                id="produto"
-                name="produto"
-                value={formData.produto}
-                onChange={handleChange}
-                className="select-field"
-                required
-              >
-                <option value="">Selecione um produto</option>
-                <option value="produto1">Cartão de Crédito Premium</option>
-                <option value="produto2">Empréstimo Pessoal</option>
-                <option value="produto3">Investimento CDB</option>
-                <option value="produto4">Seguro Residencial</option>
-                <option value="produto5">Previdência Privada</option>
-              </select>
-            </div>
+            <Select
+              label="Segmento"
+              name="segmento"
+              value={formData.segmento}
+              onChange={handleChange}
+              options={segmentosOptions}
+              error={errors.segmento}
+              required
+            />
           </div>
-        </div>
-
-        <div className="card">
-          <h2 className="text-lg font-semibold mb-4">Critérios de Segmentação</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Período da Compra (Início)
-              </label>
-              <DatePicker
-                selected={formData.dataInicio}
-                onChange={(date) => handleDateChange(date, 'dataInicio')}
-                className="input-field"
-                placeholderText="Selecione a data inicial"
-                dateFormat="dd/MM/yyyy"
-              />
-            </div>
+            <Input
+              label="Data de Início"
+              type="date"
+              name="dataInicio"
+              value={formData.dataInicio}
+              onChange={handleChange}
+              error={errors.dataInicio}
+              required
+            />
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Período da Compra (Fim)
-              </label>
-              <DatePicker
-                selected={formData.dataFim}
-                onChange={(date) => handleDateChange(date, 'dataFim')}
-                className="input-field"
-                placeholderText="Selecione a data final"
-                dateFormat="dd/MM/yyyy"
-                minDate={formData.dataInicio}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="valorMinimo" className="block text-sm font-medium text-gray-700 mb-1">
-                Valor Mínimo da Compra (R$)
-              </label>
-              <input
-                type="number"
-                id="valorMinimo"
-                name="valorMinimo"
-                value={formData.valorMinimo}
-                onChange={handleChange}
-                className="input-field"
-                placeholder="Ex: 100.00"
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="valorMaximo" className="block text-sm font-medium text-gray-700 mb-1">
-                Valor Máximo da Compra (R$)
-              </label>
-              <input
-                type="number"
-                id="valorMaximo"
-                name="valorMaximo"
-                value={formData.valorMaximo}
-                onChange={handleChange}
-                className="input-field"
-                placeholder="Ex: 1000.00"
-              />
-            </div>
-            
-            <div className="md:col-span-2">
-              <label htmlFor="localizacao" className="block text-sm font-medium text-gray-700 mb-1">
-                Localização do Cliente
-              </label>
-              <select
-                id="localizacao"
-                name="localizacao"
-                value={formData.localizacao}
-                onChange={handleChange}
-                className="select-field"
-              >
-                <option value="">Selecione uma localização</option>
-                <option value="SP">São Paulo</option>
-                <option value="RJ">Rio de Janeiro</option>
-                <option value="MG">Minas Gerais</option>
-                <option value="RS">Rio Grande do Sul</option>
-                <option value="BA">Bahia</option>
-                <option value="PR">Paraná</option>
-                <option value="todos">Todos os Estados</option>
-              </select>
-            </div>
+            <Input
+              label="Data de Término"
+              type="date"
+              name="dataFim"
+              value={formData.dataFim}
+              onChange={handleChange}
+              error={errors.dataFim}
+              required
+            />
           </div>
-        </div>
-
-        <div className="card">
-          <h2 className="text-lg font-semibold mb-4">Critérios Avançados (Opcional)</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Idade do Cliente
-              </label>
-              <div className="flex space-x-4">
-                <input
-                  type="number"
-                  className="input-field w-1/2"
-                  placeholder="Mínima"
-                />
-                <input
-                  type="number"
-                  className="input-field w-1/2"
-                  placeholder="Máxima"
-                />
-              </div>
-            </div>
+            <Select
+              label="Canal de Comunicação"
+              name="canal"
+              value={formData.canal}
+              onChange={handleChange}
+              options={canaisOptions}
+              error={errors.canal}
+              required
+            />
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Perfil de Risco
-              </label>
-              <select className="select-field">
-                <option value="">Selecione uma opção</option>
-                <option value="baixo">Baixo</option>
-                <option value="medio">Médio</option>
-                <option value="alto">Alto</option>
-                <option value="todos">Todos</option>
-              </select>
-            </div>
+            <Input
+              label="Orçamento (R$)"
+              name="orcamento"
+              value={formData.orcamento}
+              onChange={handleChange}
+              error={errors.orcamento}
+              required
+              placeholder="0,00"
+              type="number"
+              min="0"
+              step="0.01"
+            />
           </div>
-        </div>
-
-        <div className="flex justify-end space-x-4">
-          <button
-            type="button"
-            className="btn-secondary flex items-center"
-          >
-            <FiX className="mr-2" />
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            className="btn-primary flex items-center"
-          >
-            <FiSave className="mr-2" />
-            Gerar Segmentação
-          </button>
-        </div>
-      </form>
-    </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Mensagem <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              name="mensagem"
+              value={formData.mensagem}
+              onChange={handleChange}
+              rows="4"
+              className={`w-full px-3 py-2 border ${errors.mensagem ? 'border-red-500' : 'border-gray-300'} 
+                rounded-md shadow-sm focus:outline-none focus:ring-blue-500 
+                focus:border-blue-500 transition-all duration-200`}
+              placeholder="Digite a mensagem da campanha..."
+            />
+            {errors.mensagem && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.mensagem}
+              </p>
+            )}
+          </div>
+          
+          <div className="flex justify-end pt-4 border-t border-gray-200">
+            <Button
+              type="button"
+              variant="secondary"
+              className="mr-3"
+              onClick={() => navigate('/campanhas')}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={loading}
+            >
+              Criar Campanha
+            </Button>
+          </div>
+        </form>
+      </Card>
+    </motion.div>
   );
-}
+};
 
 export default CriarCampanha;
